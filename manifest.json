@@ -1,0 +1,14 @@
+{
+  "manifest_version": 3,
+  "name": "Tool for Kittl",
+  "version": "1.0.0",
+  "description": "Auto replace text and save the result as png",
+  "permissions": ["activeTab"],
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "browser_action": {
+    "default_title": "Toolkit for Kittl",
+    "default_popup": "popup.html"
+  }
+}

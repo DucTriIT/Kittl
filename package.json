@@ -1,0 +1,22 @@
+{
+  "name": "kittl",
+  "version": "1.0.0",
+  "description": "Auto replace text and save the result as png",
+  "main": "index.js",
+  "scripts": {
+    "test": "node build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "KittlTool"
+  },
+  "keywords": [
+    "kittl",
+    "logo"
+  ],
+  "author": "nguyen duc tri",
+  "license": "ISC",
+  "dependencies": {
+    "chrome-extension-async": "^3.4.1"
+  }
+}

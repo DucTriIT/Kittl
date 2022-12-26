@@ -10,7 +10,9 @@ var extensionConfig = {
 };
 
 window.onload = () => {
-
+    document.querySelector('#downloadTemplate').addEventListener('click', evt => {
+        download('template.csv', 'Year,Name,File Name\n2020,John,john_2020\n2021,Bob,bob_2021\n2022,Jane,jane_2023');
+    });
   if (document.querySelector('#fileType').value !== 'PNG') {
     document.querySelector('#pngOptions').style.display = 'none';
   }

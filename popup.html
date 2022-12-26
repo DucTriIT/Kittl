@@ -104,7 +104,12 @@
 			color: #666666;
 			font-weight: 400;
 		}
-
+        .apod-link {
+			font-size: 14px;
+			color: #00c4cc;
+			font-weight: 400;
+            cursor: pointer;
+		}
 		#apod-body-wrapper input[type="text"],
 		#apod-body-wrapper select {
 			display: block;
@@ -178,6 +183,7 @@
 						<h4 class="apod-has-tooltip">Upload File</h4>
 						<p class="apod-tooltip">Upload your .csv file</p>
 						<input class="apod-input" type="file" id="upload">
+                        <a id="downloadTemplate" class="apod-link">Download Sample Template File</a>
 					</div>
 
 					<div id="downloadOptions">

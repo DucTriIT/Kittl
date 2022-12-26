@@ -1,11 +1,5 @@
 var extensionConfig;
-var logs = ['AUTOMATEPOD LOGS:'];
-
-if (window.location.host.indexOf('photopea.com') !== -1) {
-  if (confirm("The AutomatePOD extension will NOT work here.\nIf you'd like to automate your designs using Photopea, please visit https://automatepod.com/photopea\nPress Ok to go to automatepod.com")) {
-    window.location = 'https://automatepod.com/photopea';
-  }
-}
+var logs = ['AUTOMATE LOGS:'];
 
 function findByInnerText(tag, text, useSecond, baseElement) {
   var aTags = (baseElement || document).getElementsByTagName(tag);
@@ -109,13 +103,11 @@ function click(element) {
 }
 
 chrome.runtime.onMessage.addListener(async function (event) {
-  // This is only for canva!!
-  if (window.location.host.indexOf('canva.com') === -1) {
-    await photopea(event);
+  if (window.location.host.indexOf('kittl.com') === -1) {
     return;
   }
 
-  logs = ['AUTOMATEPOD LOGS:'];
+  logs = ['AUTOMATE LOGS:'];
   extensionConfig = event.extensionConfig;
 
   for (let i = 0; i < event.variables.length; i++) {
@@ -273,128 +265,4 @@ function log(message) {
   logs.push(message);
   console.log(message);
 }
-/*********************** PHOTOPEA **************************/
 
-
-var blob;
-window.addEventListener("message", async e => {
-  if (typeof e.data == "object" && e.data.byteLength) {
-    blob = e.data;
-  } else if (typeof e.data == "object" && e.data.hasOwnProperty('filename')) {
-    var type;
-
-    switch (e.data.filename.split('.')[1]) {
-      case 'png':
-        type = 'image/png';
-        break;
-
-      case 'svg':
-        type = 'image/svg';
-        break;
-
-      case 'jpg':
-        type = 'image/jpg';
-        break;
-
-      case 'pdf':
-        type = 'application/pdf';
-        break;
-
-      default:
-        type = 'image/png';
-        break;
-    }
-
-    let url = URL.createObjectURL(new Blob([new Uint8Array(blob, 0, blob.byteLength)], {
-      type
-    }));
-    chrome.runtime.sendMessage({
-      type: 'photopea',
-      url,
-      filename: e.data.filename,
-      subfolder: e.data.subfolder
-    }, () => URL.revokeObjectURL(url));
-  }
-});
-
-async function photopea(event) {
-  let photopea = document.getElementById('photopea').contentWindow;
-  let fileType = event.fileType.indexOf(' ') != -1 ? event.fileType.split(' ')[0].toLowerCase() : event.fileType.toLowerCase();
-
-  for (let i = 0; i < event.variables.length; i++) {
-    let variable = event.variables[i]; // iterate through entire row
-
-    for (let h = 0; h < Object.keys(variable).length; ++h) {
-      let header = Object.keys(variable)[h]; // skip if its not found or empty
-
-      if (!variable[header] || variable[header] === '') {
-        continue;
-      }
-
-      if (header != 'File Name') {
-        photopea.postMessage(`
-                for (var i=0; i < app.activeDocument.layers.length; i++) {
-                    if(app.activeDocument.layers[i].name.indexOf('${header}') != -1) {
-                        app.activeDocument.layers[i].textItem.contents = app.activeDocument.layers[i].name.replace('${header}', '${variable[header]}');
-                    }
-                }`, '*');
-      }
-
-      await new Promise(done => setTimeout(() => {
-        done();
-      }, 50));
-    }
-
-    if (event.pngTransparency) {
-      photopea.postMessage(`
-                for (var i=0; i < app.activeDocument.layers.length; i++) {                 
-                    if(app.activeDocument.layers[i].name.indexOf('Background') != -1) {
-                        app.activeDocument.layers[i].opacity = 0;
-                    }
-                }`, '*');
-      await new Promise(done => setTimeout(() => {
-        done();
-      }, 50));
-    } // // Tell background to change the file name before saving it.
-
-
-    photopea.postMessage(`app.activeDocument.saveToOE("${fileType}:1");app.echoToOE({filename: "${variable['File Name'] + '.' + fileType}", subfolder: "${event.subfolder}"});`, '*');
-    await new Promise(done => setTimeout(() => {
-      done();
-    }, 1000)); // change back to header value
-
-    for (let h = 0; h < Object.keys(variable).length; ++h) {
-      let header = Object.keys(variable)[h]; // skip if its not found or empty
-
-      if (!variable[header] || variable[header] === '') {
-        continue;
-      }
-
-      if (header != 'File Name') {
-        photopea.postMessage(`
-                for (var i=0; i < app.activeDocument.layers.length; i++) {
-                    if(app.activeDocument.layers[i].name.indexOf('${header}') != -1) {
-                        app.activeDocument.layers[i].textItem.contents = app.activeDocument.layers[i].name.replace('${variable[header]}', '${header}');
-                    }
-                }`, '*');
-        await new Promise(done => setTimeout(() => {
-          done();
-        }, 50));
-      }
-    }
-
-    if (event.pngTransparency) {
-      photopea.postMessage(`
-                for (var i=0; i < app.activeDocument.layers.length; i++) {                 
-                    if(app.activeDocument.layers[i].name.indexOf('Background') != -1) {
-                        app.activeDocument.layers[i].opacity = 255;
-                    }
-                }`, '*');
-      await new Promise(done => setTimeout(() => {
-        done();
-      }, 50));
-    }
-  }
-
-  alert('done!');
-}

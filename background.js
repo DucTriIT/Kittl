@@ -3,11 +3,7 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
       case 'reset':
         reset(request);
         break;
-  
-      case 'photopea':
-        photopea(request, sendResponse);
-        break;
-  
+    
       default:
         downloadDesign(request, sendResponse);
         break;
@@ -40,25 +36,6 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
       sendResponse({
         complete: true
       });
-    });
-  }
-  function photopea(request, sendResponse) {
-    chrome.runtime.getPlatformInfo(platform => {
-      let filename;
-  
-      if (platform.os === 'win') {
-        request.subfolder = request.subfolder.replace('/', '\\');
-        filename = request.subfolder ? `${request.subfolder}\\${request.filename}` : request.filename;
-      } else {
-        filename = request.subfolder ? `${request.subfolder}/${request.filename}` : request.filename;
-      }
-  
-      chrome.downloads.download({
-        url: request.url,
-        filename,
-        conflictAction: 'overwrite',
-        saveAs: false
-      }, sendResponse);
     });
   }
   

@@ -31,7 +31,7 @@
   },
   "web_accessible_resources": [{
     "matches": ["https://*.kittl.com/*"],
-    "resources": ["banner.png","kittl.html"]
+    "resources": ["banner.png"]
   }
   ],
   "content_security_policy":{

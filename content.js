@@ -102,6 +102,18 @@ function click(element) {
   });
 }
 
+function getCookie(name) {
+  var value = "; " + document.cookie;
+  var parts = value.split("; " + name + "=");
+  if (parts.length == 2) return parts.pop().split(";").shift();
+}
+function getLocalStorage(name){
+  return localStorage.getItem(name);
+}
+function setLocalStorage(name,storedObject){
+  localStorage.setItem(name,JSON.stringify(storedObject));
+}
+
 chrome.runtime.onMessage.addListener(async function (event) {
   if (window.location.host.indexOf('kittl.com') === -1) {
     return;
@@ -113,35 +125,25 @@ chrome.runtime.onMessage.addListener(async function (event) {
   for (let i = 0; i < event.variables.length; i++) {
     let variable = event.variables[i];
 
-    for (let h = 0; h < Object.keys(variable).length; ++h) {
-      let header = Object.keys(variable)[h];
+    // for (let h = 0; h < Object.keys(variable).length; ++h) {
+    //   let header = Object.keys(variable)[h];
 
-      if (!variable[header] || variable[header] === '') {
-        continue;
-      }
+    //   if (!variable[header] || variable[header] === '') {
+    //     continue;
+    //   }
 
-      if (header != 'File Name') {
-        await replaceVariable(header, variable[header]);
-      }
-    }
+    //   if (header != 'File Name') {
+    //     await replaceVariable(header, variable[header]);
+    //   }
+    // }
     // Try to find the download button in the upper right hand corner.
 
-    var downloadButton = validate(findByInnerText('span', extensionConfig.downloadButton), 'download button');
-
+    var downloadButton = validate(document.querySelector(extensionConfig.smallDownloadButton), 'download button');
+    if(downloadButton){
+       downloadButton=downloadButton.querySelector(extensionConfig.downloadButton);
+    }
     if (!downloadButton) {
       log(`Page is too small, clicking the small up arrow download button.`); // the page is small to where we need to click on the up arrow button to get to download button
-
-      try {
-        click(document.querySelector(extensionConfig.upArrowButton));
-        log(`Clicked the up arrow button.`);
-      } catch (e) {
-        log(`tried clicking the up arrow download button`);
-      }
-
-      await new Promise(done => setTimeout(() => {
-        downloadButton = document.querySelector(extensionConfig.smallDownloadButton);
-        done();
-      }, 300));
     }
 
     click(downloadButton);
@@ -155,35 +157,20 @@ chrome.runtime.onMessage.addListener(async function (event) {
             return;
           } else if (mutation.target.innerText.indexOf('Share this design') !== -1) {
             click(findByInnerText('button', 'Download'));
-          } else if (!startedDownload && mutation.target.textContent == 'Download') {
-            if (mutation.target.childNodes[0] && mutation.target.childNodes[0].childNodes[0] && mutation.target.childNodes[0].childNodes[0].childNodes[0] && mutation.target.childNodes[0].childNodes[0].childNodes[0].getAttribute('disabled') == '') {
-              return;
-            }
+          } else if (!startedDownload && mutation.target.textContent == '') {
 
             startedDownload = true; // Click file type drop down arrow
-
-            try {
-              click(validate(findByInnerText('span', 'Suggested'), 'file type button'));
-              log(`Clicked the file type button.`);
-            } catch (e) {
-              log('tried clicking the file type button');
-              startedDownload = false;
-              return;
-            }
-
-            try {
-              click(validate(strictFindByInnerText('div', event.fileType), 'file type'));
-              log(`Clicked the file type.`);
-            } catch (e) {
-              log('tried clicking the file type');
-              startedDownload = false;
-              return;
-            }
-
-            if (event.fileType === 'PNG' && event.pngTransparency) {
+            
+            if (event.fileType === 'PNG') {
               try {
-                click(validate(findByInnerText('p', extensionConfig.transparentButton), 'transparency button'));
-                log(`Clicked the transparency button.`);
+                var transparentDiv = strictFindByInnerText('div', extensionConfig.transparentDiv);
+                if(transparentDiv){
+                  var transparentButton = validate(transparentDiv.querySelector(event.pngTransparency?extensionConfig.transparentSwitcher:extensionConfig.notTransparentSwitcher), 'transparency button');
+                  if(transparentButton){
+                        click(transparentButton);
+                        log(`Clicked the transparency button.`);
+                  }
+                }
               } catch (e) {
                 log('tried clicking the transparent button');
                 startedDownload = false;
@@ -191,17 +178,7 @@ chrome.runtime.onMessage.addListener(async function (event) {
               }
             }
 
-            try {
-              click(findByInnerText('button', 'Download'));
-              log(`Clicked the actual download button.`);
-            } catch {
-              startedDownload = false;
-              return;
-            }
-
-            try {
-              click(document.querySelector('[aria-label="Remove download"]'));
-            } catch {}
+           
 
             let fileType = event.fileType.indexOf(' ') != -1 ? event.fileType.split(' ')[0].toLowerCase() : event.fileType.toLowerCase(); // Tell background to change the file name before saving it.
 
@@ -212,7 +189,7 @@ chrome.runtime.onMessage.addListener(async function (event) {
             }, function (response) {
               // Close the successful download modal.
               try {
-                click(validate(document.querySelector(extensionConfig.deselector), 'deselector'));
+                click(validate(document.querySelector(extensionConfig.closeButton), 'close button'));
                 startedDownload = false;
                 mutationObserver.disconnect();
                 done();
@@ -220,6 +197,25 @@ chrome.runtime.onMessage.addListener(async function (event) {
                 log('tried clicking close button');
               }
             });
+            try {
+              setTimeout(() => {
+                click(
+                  validate(
+                    strictFindByInnerText("button", event.fileType),
+                    "file type"
+                  )
+                );
+                log(`Clicked the file type.`);
+              }, 200);
+            } catch (e) {
+              log("tried clicking the file type");
+              startedDownload = false;
+              return;
+            }
+            
+            try {
+              click(document.querySelector('[aria-label="Remove download"]'));
+            } catch {}
           }
         });
       }); // Wait for the download options modal to come up.
@@ -235,17 +231,7 @@ chrome.runtime.onMessage.addListener(async function (event) {
 
     try {
       click(document.querySelector('[aria-label="Remove download"]'));
-    } catch {} // Replace variables with original text
-
-
-    for (var k = 0; k < Object.keys(variable).length; ++k) {
-      var key = Object.keys(variable)[k];
-
-      if (key !== 'File Name') {
-        await replaceVariable(variable[key], key);
-        log(`Finished ${variable[key]}.`);
-      }
-    }
+    } catch {} 
 
     await new Promise(done => setTimeout(done, 500));
   }
@@ -265,4 +251,3 @@ function log(message) {
   logs.push(message);
   console.log(message);
 }
-

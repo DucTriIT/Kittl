@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Canvas</title>
+    <style>
+        canvas {
+            border: 1px solid black;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.js"></script>
+   
+</head>
+
+<body>
+</body> 
+<script>
+    // Create a new HTML element to hold the canvas
+var canvasContainer = document.createElement('canvas');
+
+// Set the width and height of the canvas using CSS
+canvasContainer.style.width = '1260px';
+canvasContainer.style.height = '600px';
+
+// Initialize a new fabric canvas
+var canvas = new fabric.Canvas(canvasContainer, {
+backgroundColor: 'white'
+});
+
+// Add a simple rectangle to the canvas
+var rect = new fabric.Rect({
+left: 100,
+top: 100,
+width: 50,
+height: 50,
+fill: 'red'
+});
+canvas.add(rect);
+var txt1 = {
+    objects: [
+    {
+        "type": "text",
+        "version": "5.2.1",
+        "originX": "left",
+        "originY": "top",
+        "left": 69.875365,
+        "top": 353.802804,
+        "width": 167.809121,
+        "height": 22.557857,
+        "fill": "rgb(107, 170, 144)",
+        "stroke": "#888",
+        "strokeWidth": 0,
+        "strokeDashArray": null,
+        "strokeLineCap": "round",
+        "strokeDashOffset": 0,
+        "strokeLineJoin": "miter",
+        "strokeUniform": true,
+        "strokeMiterLimit": 10,
+        "scaleX": 1,
+        "scaleY": 1,
+        "angle": 0,
+        "flipX": false,
+        "flipY": false,
+        "opacity": 1,
+        "shadow": null,
+        "visible": true,
+        "backgroundColor": "",
+        "fillRule": "nonzero",
+        "paintFirst": "fill",
+        "globalCompositeOperation": "source-over",
+        "skewX": 0,
+        "skewY": 0,
+        "id": "TqtGkDiMPO40doXdtKvgj",
+        "hidden": false,
+        "name": "Text (Small)",
+        "text": "It's the only planet",
+        "fontFamily": "Nanum Pen",
+        "fontWeight": "Regular",
+        "fontSize": 24.754967034747512,
+        "letterSpacing": -50,
+        "textAlignment": "center",
+        "uppercase": false,
+        "underline": false,
+        "useLigatures": true,
+        "lineHeight": 400,
+        "variationAxes": {},
+        "variation": {},
+        "shadowOptions": {
+          "color": "rgba(114, 114, 114, 1)",
+          "isChanging": true
+        },
+        "transformOptions": {},
+        "decorationOptions": {
+          "isChanging": true
+        },
+        "adjustableWidth": 167.809121
+    }
+    ]
+  };
+  fabric.util.enlivenObjects(txt1.objects, function(objects) {
+    canvas.add(...objects);
+  })
+// Render the canvas to make the rectangle visible
+canvas.renderAll();
+document.body.appendChild(canvasContainer);
+ </script>
+</html>

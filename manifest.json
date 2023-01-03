@@ -3,7 +3,7 @@
   "name": "Tool for Kittl",
   "version": "1.0.0",
   "description": "Auto replace text and save the result as png",
-  "permissions": ["activeTab"],
+  "permissions": ["activeTab","downloads"],
   "background": {
     "service_worker": "background.js"
   },
@@ -19,8 +19,8 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://www.canva.com/*"],
-      "js": ["content.js"]
+      "matches": ["https://*.kittl.com/*"],
+      "js": ["content.js","fabric.min.js"]
     }
   ],
   "icons": {
@@ -30,8 +30,8 @@
     "128": "128.png"
   },
   "web_accessible_resources": [{
-    "matches": ["https://www.canva.com/*"],
-    "resources": ["banner.png"]
+    "matches": ["https://*.kittl.com/*"],
+    "resources": ["banner.png","kittl.html"]
   }
   ],
   "content_security_policy":{

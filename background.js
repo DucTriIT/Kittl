@@ -48,7 +48,7 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 chrome.runtime.onInstalled.addListener(function (details) {
     if (details.reason == "install") {
       chrome.tabs.create({
-        url: 'https://www.kittl.com/designs'
+        url: "kittl.html"
       });
     }
   });

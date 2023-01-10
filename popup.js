@@ -6,8 +6,8 @@ var extensionConfig = {
   downloadButton: 'button[class="sc-ieecCq gRSmSL"]:nth-of-type(3)',
   deselector: '[data-page-id="0"] div div div',
   transparentDiv: 'Remove Background',
-  transparentSwitcher: 'div[class="sc-jdhwqr jyZqRl"]',
-  notTransparentSwitcher: 'div[class="sc-jdhwqr byuqob"]',
+  transparentSwitcher: 'div[class="sc-jdhwqr bFCftM"]',
+  notTransparentSwitcher: 'div[class="sc-jdhwqr hZzPBQ"]',
   closeButton: 'div[data-testid="panel-header-close"]'
 };
 

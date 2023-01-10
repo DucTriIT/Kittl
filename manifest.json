@@ -3,7 +3,7 @@
   "name": "Tool for Kittl",
   "version": "1.0.0",
   "description": "Auto replace text and save the result as png",
-  "permissions": ["activeTab","downloads"],
+  "permissions": ["tabs","activeTab","downloads","storage"],
   "background": {
     "service_worker": "background.js"
   },
@@ -31,7 +31,7 @@
   },
   "web_accessible_resources": [{
     "matches": ["https://*.kittl.com/*"],
-    "resources": ["banner.png"]
+    "resources": ["banner.png","ajax-loader.gif","loader.css"]
   }
   ],
   "content_security_policy":{

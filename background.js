@@ -81,7 +81,7 @@ function requestTabListener(tabId, changeInfo, tab) {
 		if (foundTabRecord.length > 0) {
       setTimeout(() => {
         chrome.tabs.sendMessage(requestTabId, { from: 'background', type: 'download',message:foundTabRecord[0].message,fileName:foundTabRecord[0].fileName});
-      }, 1000);
+      }, 1500);
 		}
 		
 		chrome.tabs.onUpdated.removeListener(requestTabListener);

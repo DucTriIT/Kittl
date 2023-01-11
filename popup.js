@@ -8,6 +8,9 @@ var extensionConfig = {
   transparentDiv: 'Remove Background',
   transparentSwitcher: 'div[class="sc-jdhwqr bFCftM"]',
   notTransparentSwitcher: 'div[class="sc-jdhwqr hZzPBQ"]',
+  optimizeQualityDiv: 'Optimize Quality',
+  optimizeQualitySwitcher: 'div[class="sc-jdhwqr bFCftM"]',
+  notoptimizeQualitySwitcher: 'div[class="sc-jdhwqr hZzPBQ"]',
   closeButton: 'div[data-testid="panel-header-close"]'
 };
 
@@ -61,6 +64,7 @@ window.onload = () => {
       variables,
       fileType: document.querySelector('#fileType').value,
       pngTransparency: document.querySelector('#pngTransparency').checked,
+      optimizeQuality: document.querySelector('#pngOptimize').checked,
       subfolder: document.querySelector('#subfolder').value,
       extensionConfig: extensionConfig
     };

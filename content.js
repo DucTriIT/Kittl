@@ -330,7 +330,6 @@ chrome.runtime.onMessage.addListener(async function (event) {
               startedDownload = false;
               return;
             }
-
             try {
               click(document.querySelector('[aria-label="Remove download"]'));
             } catch {}
@@ -404,7 +403,7 @@ chrome.runtime.onMessage.addListener(async function (event) {
     } else {
       log(`Failed to update artboard ${i + 1} of ${event.variables.length}.`);
     }
-    await new Promise((done) => setTimeout(done,event.optimizeQuality?10000:5000));
+    await new Promise((done) => setTimeout(done,event.optimizeQuality?20000:7000));
   }
   //press Ctr + S to save the file
   if (formData.has("name")) {

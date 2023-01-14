@@ -80,8 +80,8 @@ function requestTabListener(tabId, changeInfo, tab) {
     var foundTabRecord = requestTabIds.filter((list) => { return list.tabId == requestTabId });
 		if (foundTabRecord.length > 0) {
       setTimeout(() => {
-        chrome.tabs.sendMessage(requestTabId, { from: 'background', type: 'download',message:foundTabRecord[0].message,fileName:foundTabRecord[0].fileName});
-      }, 1500);
+      chrome.tabs.sendMessage(requestTabId, { from: 'background', type: 'download',message:foundTabRecord[0].message,fileName:foundTabRecord[0].fileName});
+      }, 1000);
 		}
 		
 		chrome.tabs.onUpdated.removeListener(requestTabListener);

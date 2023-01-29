@@ -4,6 +4,7 @@ var extensionConfig = {
   upArrowButton: 'button path[d="M4.5 11.75V19a.5.5 0 0 0 .5.5h14a.5.5 0 0 0 .5-.5v-7.25a.75.75 0 1 1 1.5 0V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7.25a.75.75 0 1 1 1.5 0zm8.323-6.19v9.69a.75.75 0 0 1-1.5 0l-.001-9.69-3.037 3.215a.751.751 0 0 1-1.062-1.06l4.318-4.495a.751.751 0 0 1 1.062 0l4.18 4.495a.749.749 0 1 1-1.06 1.06l-2.9-3.216z"]',
   smallDownloadButton: 'div[class="sc-dkPtRN sc-hKwDye jlYchU"]',
   downloadButton: 'button[class="sc-ieecCq gRSmSL"]:nth-of-type(3)',
+  downloadOption: 'div[class="sc-brSvTw duXmCe"]',
   deselector: '[data-page-id="0"] div div div',
   transparentDiv: 'Remove Background',
   transparentSwitcher: 'div[class="sc-jdhwqr bFCftM"]',
@@ -72,7 +73,7 @@ window.onload = () => {
         active: true,
         currentWindow: true
       }, function (tabs) {
-        chrome.tabs.sendMessage(tabs[0].id, message);
+        chrome.tabs.sendMessage(tabs[0].id, { from: 'popup', type: 'startdownload',message:message }, function (response) {});
       });    
   }); // Get extension configs
 };

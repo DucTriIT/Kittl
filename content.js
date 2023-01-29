@@ -7,7 +7,7 @@ const waitFor = (callback) =>
         resolve();
         clearInterval(interval);
       }
-    }, 1000);
+    }, 2000);
   });
 function findByInnerText(tag, text, useSecond, baseElement) {
   var aTags = (baseElement || document).getElementsByTagName(tag);
@@ -152,7 +152,13 @@ function click(element) {
     element.dispatchEvent(e);
   });
 }
-
+function change(element) {
+  ["mouseover", "mousedown", "mouseup", "change"].forEach((evt) => {
+    var e = document.createEvent("MouseEvents");
+    e.initEvent(evt, true, true);
+    element.dispatchEvent(e);
+  });
+}
 function getCookie(name) {
   var value = "; " + document.cookie;
   var parts = value.split("; " + name + "=");
@@ -194,12 +200,20 @@ function insertControlsHtml() {
   </div>`;
   document.body.innerHTML += cont_html;
 }
+let htcUserAccessToken = null;
+let artboardStorage = null;
+let artboardStorageOrg = null;
+let index =0;
+let message = null;
+let formData = null;
 chrome.runtime.onMessage.addListener(async function (event) {
   if (window.location.host.indexOf("kittl.com") === -1) {
     return;
   }
+ 
   logs = ["AUTOMATE LOGS:"];
   if ((event.from = "background" && event.type == "download")) {
+    log("Starting download");
     extensionConfig = event.message.extensionConfig;
 
     // Try to find the download button in the upper right hand corner.
@@ -215,9 +229,11 @@ chrome.runtime.onMessage.addListener(async function (event) {
     if (!downloadButton) {
       log(`Page is too small, clicking the small up arrow download button.`); // the page is small to where we need to click on the up arrow button to get to download button
     }
-    waitFor(() => downloadButton.disabled == false);
+    await waitFor(() => downloadButton.disabled == false);
     click(downloadButton);
-    log(`Clicked the share button.`);
+    // await waitFor(() => {
+    //   return document.querySelector(extensionConfig.downloadOption) != null;
+    // });
     await new Promise((done) => {
       var startedDownload = false;
       var mutationObserver = new MutationObserver(function (mutations) {
@@ -344,87 +360,120 @@ chrome.runtime.onMessage.addListener(async function (event) {
         characterData: true,
       });
     });
+
     return;
   }
-
-  let htcUserAccessToken = getCookie("htcUserAccessToken");
-  let artboardStorage = getLocalStorage("artboard");
-  //clone artboardStorage
-  let artboardStorageOrg = JSON.parse(artboardStorage);
-  const formData = new FormData();
-  if (artboardStorageOrg.config.designId != undefined) {
-    formData.append("id", artboardStorageOrg.config.designId);
-  } else {
-    alert("Please save your design first!");
-    document.getElementById("loading").remove();
-    return;
+  if ((event.from = "popup" && event.type == "startdownload")) {
+    htcUserAccessToken = getCookie("htcUserAccessToken");
+    artboardStorage = getLocalStorage("artboard");
+    formData = new FormData();
+    //clone artboardStorage
+    artboardStorageOrg = JSON.parse(artboardStorage);
+    if (artboardStorageOrg.config.designId != undefined) {
+      formData.append("id", artboardStorageOrg.config.designId);
+    } else {
+      alert("Please save your design first!");
+      return;
+    }
+    message = event.message;
+    index = 0;
+    runDownload(index);
   }
-  for (let i = 0; i < event.variables.length; i++) {
-    let variable = event.variables[i];
-    let artboardStorageClone = JSON.parse(artboardStorage);
-    for (let h = 0; h < Object.keys(variable).length; ++h) {
-      let header = Object.keys(variable)[h];
-
-      if (!variable[header] || variable[header] === "") {
-        continue;
-      }
-
-      if (header != "File Name") {
-        artboardStorageClone.objects.forEach((object) => {
-          if (object.type === "pathText" && object.text === header) {
-            object.text = variable[header];
-          }
-        });
-      }
-      else {
-        if (formData.has("name")) {
-          formData.set("name", variable[header]);
-        } else {
-          formData.append("name", variable[header]);
+  if ((event.from = "background" && event.type == "downloadNext")){
+    index += 1;
+    runDownload(index);
+  }
+});
+const checkTab = async (tabId) => {
+  return await new Promise((resolve, reject) => {
+    let interval = setInterval(() => {
+      chrome.tabs.get(tabId, (tab) => {
+        if(tab == undefined){
+          resolve(tab);
+          clearInterval(interval);
         }
-        artboardStorageClone.config.title = variable[header];
-      }
+      });
+    },2000);
+  })
+
+}
+async function runDownload(i){
+  if(message.variables.length == 0){
+    alert("No variables to download");
+    return;
+  }
+
+  if(i >= message.variables.length){
+    //press Ctr + S to save the file
+    if (formData.has("name")) {
+      formData.set("name", artboardStorageOrg.config.title);
+    } else {
+      formData.append("name", artboardStorageOrg.config.title);
     }
     if (formData.has("state")) {
-      formData.set("state", JSON.stringify(artboardStorageClone));
+      formData.set("state", artboardStorage);
     } else {
-      formData.append("state", JSON.stringify(artboardStorageClone));
+      formData.append("state", artboardStorage);
     }
-    const response = await updateKittl(htcUserAccessToken, formData);
-    const data = await response.json();
-    if (data.id) {
+    await new Promise((done) => {
+      setTimeout(async() => {
+        await updateKittl(htcUserAccessToken, formData);
+        done();
+      }, 1000);
+    });
+    alert("done");
+    return;
+  }
+  let variable = message.variables[i];
+  let artboardStorageClone = JSON.parse(artboardStorage);
+  for (let h = 0; h < Object.keys(variable).length; ++h) {
+    let header = Object.keys(variable)[h];
+
+    if (!variable[header] || variable[header] === "") {
+      continue;
+    }
+
+    if (header != "File Name") {
+      artboardStorageClone.objects.forEach((object) => {
+        if (object.type === "pathText" && object.text === header) {
+          object.text = variable[header];
+        }
+      });
+    }
+    else {
+      if (formData.has("name")) {
+        formData.set("name", variable[header]);
+      } else {
+        formData.append("name", variable[header]);
+      }
+      artboardStorageClone.config.title = variable[header];
+    }
+  }
+  if (formData.has("state")) {
+    formData.set("state", JSON.stringify(artboardStorageClone));
+  } else {
+    formData.append("state", JSON.stringify(artboardStorageClone));
+  }
+  const response = await updateKittl(htcUserAccessToken, formData);
+  const data = await response.json();
+  if (data.id) {
+    try{
       chrome.runtime.sendMessage({
         type: "download",
         designId: artboardStorageClone.config.designId,
         fileName: variable["File Name"],
-        message: event,
+        message: message,
       });
-      log(`Updated artboard ${i + 1} of ${event.variables.length}.`);
-    } else {
-      log(`Failed to update artboard ${i + 1} of ${event.variables.length}.`);
     }
-    await new Promise((done) => setTimeout(done,event.optimizeQuality?20000:7000));
-  }
-  //press Ctr + S to save the file
-  if (formData.has("name")) {
-    formData.set("name", artboardStorageOrg.config.title);
+    catch(e){
+      log("tried sending download message");
+    }
+    log(`Updated artboard ${i + 1} of ${message.variables.length}.`);
   } else {
-    formData.append("name", artboardStorageOrg.config.title);
+    log(`Failed to update artboard ${i + 1} of ${message.variables.length}.`);
   }
-  if (formData.has("state")) {
-    formData.set("state", artboardStorage);
-  } else {
-    formData.append("state", artboardStorage);
-  }
-  await new Promise((done) => {
-    setTimeout(async() => {
-      await updateKittl(htcUserAccessToken, formData);
-      done();
-    }, 1000);
-  });
-  alert("done");
-});
-
+  // await new Promise((done) => setTimeout(done,message.optimizeQuality?20000:7000));
+}
 function validate(thingToValidate, name) {
   if (thingToValidate === undefined || thingToValidate === null) {
     log(`${name} is not defined.`);

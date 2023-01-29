@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Tool for Kittl",
   "version": "1.0.0",
-  "description": "Auto replace text and save the result as png",
+  "description": "Automate your Kittl designs with variables. A helpful tool for print on demand businesses.",
   "permissions": ["tabs","activeTab","downloads","storage"],
   "background": {
     "service_worker": "background.js"

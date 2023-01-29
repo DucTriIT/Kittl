@@ -1,15 +1,20 @@
+var baseTabId = 0;
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     switch (request.type) {
       case 'reset':
         reset(request);
         break;
       case 'download':
+        baseTabId = sender.tab.id;
         download(request.designId,request.fileName,request.message);
         break;
       case 'closeTab':
         setTimeout(() => {
           chrome.tabs.remove(sender.tab.id);
         }, 2000)
+        setTimeout(() => {
+          chrome.tabs.sendMessage(baseTabId, { from: 'background', type: 'downloadNext' }, function (response) {});
+        }, 200);
         break;
       default:
         downloadDesign(request, sendResponse);
@@ -74,19 +79,18 @@ function download(designId,fileName,message) {
   //  const width = Math.floor(tabWindow.width / 2);
   
   // });
+  function requestTabListener(tabId, changeInfo, tab) {
+    if (changeInfo.status === "complete" && tabId === requestTabId) {
+      var foundTabRecord = requestTabIds.filter((list) => { return list.tabId == requestTabId });
+      if (foundTabRecord.length > 0) {
+        chrome.tabs.sendMessage(tabId, { from: 'background', type: 'download',message:foundTabRecord[0].message,fileName:foundTabRecord[0].fileName});
+      }
+      
+      chrome.tabs.onUpdated.removeListener(requestTabListener);
+    }
+  }
 }
-function requestTabListener(tabId, changeInfo, tab) {
-	if (changeInfo.status === "complete" && tabId === requestTabId) {
-    var foundTabRecord = requestTabIds.filter((list) => { return list.tabId == requestTabId });
-		if (foundTabRecord.length > 0) {
-      setTimeout(() => {
-      chrome.tabs.sendMessage(requestTabId, { from: 'background', type: 'download',message:foundTabRecord[0].message,fileName:foundTabRecord[0].fileName});
-      }, 1000);
-		}
-		
-		chrome.tabs.onUpdated.removeListener(requestTabListener);
-	}
-}
+
 chrome.runtime.onInstalled.addListener(function (details) {
     if (details.reason == "install") {
       chrome.tabs.create({

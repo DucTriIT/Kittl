@@ -460,6 +460,7 @@ async function runDownload(i){
       type: "reset",
     });
     alert("done");
+    window.location.reload();
     return;
   }
   let variable = message.variables[i];

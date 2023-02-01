@@ -64,17 +64,13 @@ window.onload = () => {
     var message = {
       variables,
       fileType: document.querySelector('#fileType').value,
+      fileWidth: document.querySelector('#fileWidth').value,
       pngTransparency: document.querySelector('#pngTransparency').checked,
       optimizeQuality: document.querySelector('#pngOptimize').checked,
       subfolder: document.querySelector('#subfolder').value,
       extensionConfig: extensionConfig
     };
-    chrome.tabs.query({
-        active: true,
-        currentWindow: true
-      }, function (tabs) {
-        chrome.tabs.sendMessage(tabs[0].id, { from: 'popup', type: 'startdownload',message:message }, function (response) {});
-      });    
+    chrome.runtime.sendMessage({ from: 'popup', type: 'startdownload',message:message }, function (response) {});
   }); // Get extension configs
 };
 

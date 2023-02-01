@@ -152,12 +152,12 @@ function click(element) {
     element.dispatchEvent(e);
   });
 }
-function change(element) {
-  ["mouseover", "mousedown", "mouseup", "change"].forEach((evt) => {
-    var e = document.createEvent("MouseEvents");
-    e.initEvent(evt, true, true);
-    element.dispatchEvent(e);
-  });
+function change(element,value) {
+  element.focus();
+  element.select();
+  //element.value = value;
+  document.execCommand('insertText', false,value);
+  element.blur();
 }
 function getCookie(name) {
   var value = "; " + document.cookie;
@@ -206,7 +206,7 @@ let artboardStorageOrg = null;
 let index =0;
 let message = null;
 let formData = null;
-chrome.runtime.onMessage.addListener(async function (event) {
+chrome.runtime.onMessage.addListener(async function (event,sender, sendResponse) {
   if (window.location.host.indexOf("kittl.com") === -1) {
     return;
   }
@@ -217,23 +217,25 @@ chrome.runtime.onMessage.addListener(async function (event) {
     extensionConfig = event.message.extensionConfig;
 
     // Try to find the download button in the upper right hand corner.
-    var downloadButton = validate(
-      document.querySelector(extensionConfig.smallDownloadButton),
-      "download button"
-    );
-    if (downloadButton) {
-      downloadButton = downloadButton.querySelector(
-        extensionConfig.downloadButton
-      );
-    }
-    if (!downloadButton) {
-      log(`Page is too small, clicking the small up arrow download button.`); // the page is small to where we need to click on the up arrow button to get to download button
-    }
-    await waitFor(() => downloadButton.disabled == false);
-    click(downloadButton);
-    // await waitFor(() => {
-    //   return document.querySelector(extensionConfig.downloadOption) != null;
-    // });
+    await new Promise((done) => {
+      let download =  setInterval(() => {
+        var downloadButton = validate(
+          document.querySelector(extensionConfig.smallDownloadButton),
+          "download button"
+        );
+        if (downloadButton) {
+          downloadButton = downloadButton.querySelector(
+            extensionConfig.downloadButton
+          );
+        }
+        if (downloadButton && downloadButton.disabled == false) {
+          click(downloadButton);
+          clearTimeout(download);
+          done();
+        }
+      }, 1000);
+    });
+    
     await new Promise((done) => {
       var startedDownload = false;
       var mutationObserver = new MutationObserver(function (mutations) {
@@ -248,7 +250,7 @@ chrome.runtime.onMessage.addListener(async function (event) {
             click(downloadButton);
           } else if (!startedDownload && mutation.target.textContent == "") {
             startedDownload = true; // Click file type drop down arrow
-
+           
             if (event.message.fileType === "PNG") {
               try {
                 var transparentDiv = strictFindByInnerText(
@@ -305,31 +307,43 @@ chrome.runtime.onMessage.addListener(async function (event) {
                 ? event.message.fileType.split(" ")[0].toLowerCase()
                 : event.message.fileType.toLowerCase(); // Tell background to change the file name before saving it.
             console.log(fileType);
-            chrome.runtime.sendMessage(
-              {
-                type: "downloadDesign",
-                filename: event.fileName + "." + fileType,
-                subfolder: event.message.subfolder,
-              },
-              function (response) {
-                // Close the successful download modal.
-                try {
-                  var closeButton = validate(
-                    document.querySelector(extensionConfig.closeButton),
-                    "close button"
-                  );
-                  if (closeButton) {
-                    click(closeButton);
-                  }
-                  startedDownload = false;
-                  mutationObserver.disconnect();
-                  chrome.runtime.sendMessage({ type: "closeTab" });
-                  done();
-                } catch (e) {
-                  log("tried clicking close button");
+            try{
+              chrome.runtime.sendMessage(
+                {
+                  type: "downloadDesign",
+                  filename: event.fileName + "." + fileType,
+                  subfolder: event.message.subfolder,
+                },
+                function (response) {
+                 
+                }
+              );
+            }
+            catch(e){
+              log("tried clicking the quality button");
+            }
+            
+            try {
+              var widthDiv = strictFindByInnerText(
+                "div",
+                "Width:"
+              );
+              if (widthDiv) {
+                var widthInput = validate(
+                  widthDiv.querySelector('input[class="sc-kBzgEd jpMFri"]'),
+                  "width input"
+                );
+                if (widthInput && event.message.fileWidth) {
+                  change(widthInput, event.message.fileWidth);
+                  log(`Changed the width input.`);
                 }
               }
-            );
+            } catch (e) {
+              log("tried changing the width input");
+              startedDownload = false;
+              return;
+            }
+
             try {
               setTimeout(() => {
                 var fileTypeButton = validate(
@@ -346,12 +360,34 @@ chrome.runtime.onMessage.addListener(async function (event) {
               startedDownload = false;
               return;
             }
+
             try {
               click(document.querySelector('[aria-label="Remove download"]'));
-            } catch {}
+            } catch {
+            }
+            // Close the successful download modal.
+            try {
+              setTimeout(() => {
+                var closeButton = validate(
+                  document.querySelector(extensionConfig.closeButton),
+                  "close button"
+                );
+                if (closeButton) {
+                  click(closeButton);
+                }
+                startedDownload = false;
+                mutationObserver.disconnect();
+                // chrome.runtime.sendMessage({ type: "closeTab" }, function () {
+                  
+                // });
+                done();
+              }, 500);
+            } catch (e) {
+              log("tried clicking close button");
+            }
           }
         });
-      }); // Wait for the download options modal to come up.
+      }); //Wait for the download options modal to come up.
 
       mutationObserver.observe(document.body, {
         attributes: true,
@@ -360,10 +396,9 @@ chrome.runtime.onMessage.addListener(async function (event) {
         characterData: true,
       });
     });
-
     return;
   }
-  if ((event.from = "popup" && event.type == "startdownload")) {
+  if ((event.from = "background" && event.type == "startdownload")) {
     htcUserAccessToken = getCookie("htcUserAccessToken");
     artboardStorage = getLocalStorage("artboard");
     formData = new FormData();
@@ -420,6 +455,9 @@ async function runDownload(i){
         await updateKittl(htcUserAccessToken, formData);
         done();
       }, 1000);
+    });
+    chrome.runtime.sendMessage({
+      type: "reset",
     });
     alert("done");
     return;

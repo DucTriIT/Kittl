@@ -110,6 +110,7 @@
             cursor: pointer;
 		}
 		#apod-body-wrapper input[type="text"],
+		#apod-body-wrapper input[type="number"],
 		#apod-body-wrapper select {
 			display: block;
 			border: 1px solid #CCCCCC;
@@ -204,6 +205,11 @@
 						</div>
 
 						<div id="pngOptions" class="apod-input-container">
+							<div class="col-6">
+								<h4 class="apod-has-tooltip">Width</h4>
+								<span class="apod-tooltip">Set Width</span>
+								<input id="fileWidth" type="number">
+							</div>
 							<div class="col-6">
 								<h4 class="apod-has-tooltip">PNG Transparent</h4>
 								<input id="pngTransparency" type="checkbox">

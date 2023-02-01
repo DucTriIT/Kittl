@@ -1,56 +1,110 @@
 var baseTabId = 0;
+var cuurentTabId = 0;
+var requestDownloadDesign = null;
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     switch (request.type) {
       case 'reset':
-        reset(request);
-        break;
+        reset(sendResponse);
+        return true;
+        
       case 'download':
         baseTabId = sender.tab.id;
         download(request.designId,request.fileName,request.message);
+        sendResponse({
+          complete: true
+        })
+        return true
+      case 'startdownload':
+        chrome.tabs.query({
+          active: true,
+          currentWindow: true
+        }, function (tabs) {
+          chrome.tabs.sendMessage(tabs[0].id, { from: 'background', type: 'startdownload',message:request.message }, function (response) {});
+        });    
         break;
-      case 'closeTab':
-        setTimeout(() => {
-          chrome.tabs.remove(sender.tab.id);
-        }, 2000)
-        setTimeout(() => {
-          chrome.tabs.sendMessage(baseTabId, { from: 'background', type: 'downloadNext' }, function (response) {});
-        }, 200);
-        break;
+      // case 'closeTab':
+      //   chrome.tabs.sendMessage(baseTabId, { from: 'background', type: 'downloadNext' }, function (response) {});
+      //   sendResponse({
+      //     complete: true
+      //   })
+      //   break;
       default:
+        cuurentTabId = sender.tab.id;
         downloadDesign(request, sendResponse);
-        break;
+        return true;
     }
-  
-    return true;
 });
 function downloadDesign(request, sendResponse) {
-  try {
-    chrome.downloads.onDeterminingFilename.addListener(function a(downloadItem, suggest) {
-      var file;
+  requestDownloadDesign = request;
+  sendResponse({
+    complete: true
+  })
+  // try {
+  //   console.log("event change file name");
+  //   chrome.downloads.onDeterminingFilename.addListener(function a(downloadItem, suggest) {
+  //     var file;
 
-      if (request.subfolder) {
-        file = `${request.subfolder}/${request.filename}`;
+  //     if (request.subfolder) {
+  //       file = `${request.subfolder}/${request.filename}`;
+  //     } else {
+  //       file = request.filename;
+  //     }
+
+  //     suggest({
+  //       'filename': file,
+  //       'conflict_action': "overwrite",
+  //       'conflictAction': "overwrite"
+  //     });
+  //     console.log("changed file name");
+  //     chrome.downloads.onDeterminingFilename.removeListener(a);
+  //   });
+  // } catch (e) {
+  //   console.log(e);
+  // }
+  // try {
+  //   console.log("event created file name");
+  //   chrome.downloads.onCreated.addListener(function b() {
+  //     chrome.downloads.onCreated.removeListener(b);
+  //     console.log("done created file name");
+  //     sendResponse({
+  //       complete: true
+  //     });
+  //   });
+  // } catch (e) {
+  //   console.log(e);
+  // }
+  
+}
+try {
+  chrome.downloads.onDeterminingFilename.addListener(function a(downloadItem, suggest) {
+    var file;
+    if(requestDownloadDesign!=null){
+      if (requestDownloadDesign.subfolder) {
+        file = `${requestDownloadDesign.subfolder}/${requestDownloadDesign.filename}`;
       } else {
-        file = request.filename;
+        file = requestDownloadDesign.filename;
       }
-
+  
       suggest({
         'filename': file,
         'conflict_action': "overwrite",
         'conflictAction': "overwrite"
       });
-      chrome.downloads.onDeterminingFilename.removeListener(a);
-    });
-  } catch (e) {}
-
-  chrome.downloads.onCreated.addListener(function b() {
-    chrome.downloads.onCreated.removeListener(b);
-    sendResponse({
-      complete: true
-    });
+    }
+    
   });
+} catch (e) {
+  console.log(e);
 }
-
+try{
+    chrome.downloads.onCreated.addListener(function b() {
+      chrome.tabs.remove(cuurentTabId);
+      chrome.tabs.sendMessage(baseTabId, { from: 'background', type: 'downloadNext' }, function (response) {});
+    });
+}
+catch(e){
+  console.log(e);
+}
 function reset(sendResponse) {
   chrome.runtime.reload();
   sendResponse({
@@ -63,7 +117,6 @@ function download(designId,fileName,message) {
   chrome.tabs.create({
     url: `https://app.kittl.com/?did=${designId}`,
   }, function (tabs) {
-    console.log(tabs)
     var temp = {}; 
     requestTabId =(tabs.id);
     temp.tabId = requestTabId;

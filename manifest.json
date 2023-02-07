@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "Tool for Kittl",
+  "name": "Automate Canva",
   "version": "1.0.0",
   "description": "Auto replace text and save the result as png",
-  "permissions": ["activeTab"],
+  "permissions": ["activeTab","downloads"],
   "background": {
     "service_worker": "background.js"
   },
